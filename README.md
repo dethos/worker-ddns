@@ -1,12 +1,12 @@
 # Worker DDNS
 
 This repository provides two simple scripts that together will allow you to build a
-simple and efficient DDNS system using Cloudflare workers.
+simple and efficient DDNS system using Cloudflare Workers and DNS.
 
 **Example use case:** You have a machine where the IP address is dynamically assigned and
 changes frequently.
 
-The `agent.py` should regularly contact a CF worker running the `worker.js` code,
+The `agent.py` will regularly contact the CF worker running the `worker.js` code,
 that will in turn use the cloudflare API to update the DNS record in question
 with the new IP address.
 
@@ -17,14 +17,16 @@ the principle of the least privilege and the name should belong to a domain we
 control.
 
 Since Cloudflare API Token permissions aren't granular enough to limit the token
-access to a single DNS record, we place a worker in front of it.
+access to a single DNS record, we place a worker in front of it (this way the token 
+with extra priviledges never leaves cloudflare's servers).
 
 ## Usage
 
 Both scripts (`worker.js` and `agent.py`) don't require any extra dependencies,
-so they just be copied right out of the repository.
+so they can be copied right out of the repository tothe destination without any
+extra steps.
 
-Before starting create a new API Token on your Cloudflare's profile page with
+Before starting, you need to create a new API Token on your Cloudflare's profile page with
 permissions to edit the DNS records of one of your domains (Zone).
 
 ### Worker
@@ -61,7 +63,7 @@ $ ./agent.py
 ```
 
 In the most common scenario you will want to run it periodically. So you will need to
-use scheduler like `cron` or a `systemd timer unit`. Below is a simple example
+use a scheduler like `cron` or a `systemd timer unit`. Below is a simple example
 that can be inserted after running `crontab -e`:
 
 ```
