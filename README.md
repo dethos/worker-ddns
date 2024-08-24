@@ -1,30 +1,30 @@
 # Worker DDNS
 
-This repository provides two simple scripts that together will allow you to build a
+This repository provides two simple scripts that, together, will allow you to build a
 simple and efficient DDNS system using Cloudflare Workers and DNS.
 
 **Example use case:** You have a machine where the IP address is dynamically assigned and
 changes frequently.
 
 The `agent.py` will regularly contact the CF worker running the `worker.js` code,
-that will in turn use the cloudflare API to update the DNS record in question
+that will in turn use the Cloudflare API to update the DNS record in question
 with the new IP address.
 
 ## Why use Workers
 
-Because we don't want to signup to an extra external service, we want to apply
-the principle of the least privilege and the name should belong to a domain we
+Because we don't want to sign up for an extra external service, we want to apply
+the principle of the least privilege, and the name should belong to a domain we
 control.
 
 Since Cloudflare API Token permissions aren't granular enough to limit the token
-access to a single DNS record, we place a worker in front of it (this way the token 
-with extra priviledges never leaves cloudflare's servers).
+access to a single DNS record, we place a worker in front of it (this way the token
+with extra privileges, never leaves Cloudflare's servers).
 
 ## Usage
 
-Both scripts (`worker.js` and `agent.py`) don't require any extra dependencies,
-so they can be copied right out of the repository tothe destination without any
-extra steps.
+Both scripts (`worker.js` and `agent.py`) don't require any extra dependencies
+(they rely only on the existing "standard libraries"), so they can be copied, right
+out of the repository to the destination without any extra steps.
 
 Before starting, you need to create a new API Token on your Cloudflare's profile page with
 permissions to edit the DNS records of one of your domains (Zone).
@@ -48,7 +48,7 @@ Then deploy the worker.
 
 ### Agent
 
-Copy the `agent.py` file to the machine you want your subdomain/domain
+Copy the `agent.py` file to the machine where you want your subdomain/domain
 "pointed to".
 
 Set the following environment variables:
@@ -62,12 +62,48 @@ Then execute the script:
 $ ./agent.py
 ```
 
-In the most common scenario you will want to run it periodically. So you will need to
-use a scheduler like `cron` or a `systemd timer unit`. Below is a simple example
-that can be inserted after running `crontab -e`:
+In the most common scenario, you will want to run it periodically. So you will need to
+use a scheduler like `cron` or a `systemd timer unit`.
+
+Here's a simple example that can be inserted after running `crontab -e`:
 
 ```
 SHARED_KEY=<your-generated-key>
 WORKER_URL=<cf-worker-url>
 */5 * * * *  /path/to/agent.py
+```
+
+On the other hand, if you prefer to use `systemd`, the configuration would look like this:
+
+```
+# ddns.service
+
+[Unit]
+Description=Updates the DNS record with IP address
+Wants=ddns.timer
+
+[Service]
+Environment="SHARED_KEY=<your-generated-key>"
+Environment="WORKER_URL=<cf-worker-url>"
+Type=oneshot
+ExecStart=/path/to/agent.py
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+# ddns.timer
+
+[Unit]
+Description=Runs the DDNS agent periodically
+Requires=ddns.service
+
+[Timer]
+Unit=ddns.service
+OnBootSec=60
+OnUnitActiveSec=5m
+
+[Install]
+WantedBy=timers.target
 ```

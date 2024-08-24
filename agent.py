@@ -13,7 +13,7 @@ import json
 import logging
 import random
 from datetime import datetime
-from urllib import request, parse, error
+from urllib import request, error
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     if key and url:
         try:
             update_dns_record(url, key)
-        except (error.URLError, error.HTTPError) as err:
+        except (error.URLError, error.HTTPError):
             logger.exception("Failed to update DNS record")
     else:
         logger.error("Cannot find configs. Aborting DNS update")
